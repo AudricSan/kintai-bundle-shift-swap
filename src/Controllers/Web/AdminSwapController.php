@@ -152,8 +152,9 @@ final class AdminSwapController
             [$requesterId, $targetId],
             'shift_assigned',
             'notif_swap_applied_body',
-            [],
-            (int) ($savedSwap['id'] ?? 0)
+            $this->swapDatesReplace($reqShift, $tgtShift),
+            (int) ($savedSwap['id'] ?? 0),
+            '/employee/swaps'
         );
 
         return Response::redirect($this->base() . '/admin/swap-requests?success=created');
@@ -256,8 +257,12 @@ final class AdminSwapController
             array_filter([(int) ($swap['requester_id'] ?? 0), (int) ($swap['target_user_id'] ?? 0)]),
             'swap_accepted',
             'notif_swap_accepted_body',
-            [],
-            (int) $swap['id']
+            $this->swapDatesReplace(
+                $this->shifts->findById($reqShiftId) ?? [],
+                $this->shifts->findById($tgtShiftId) ?? []
+            ),
+            (int) $swap['id'],
+            '/employee/swaps'
         );
         return Response::redirect($this->base() . '/admin/swap-requests?success=approved');
     }
@@ -275,8 +280,12 @@ final class AdminSwapController
             (int) ($swap['requester_id'] ?? 0),
             'swap_refused',
             'notif_swap_refused_body',
-            [],
-            (int) $swap['id']
+            $this->swapDatesReplace(
+                $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0)) ?? [],
+                $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0)) ?? []
+            ),
+            (int) $swap['id'],
+            '/employee/swaps'
         );
         return Response::redirect($this->base() . '/admin/swap-requests?success=refused');
     }
@@ -312,8 +321,12 @@ final class AdminSwapController
                 array_filter([$requesterId, $targetId]),
                 'shift_assigned',
                 'notif_swap_cancelled_restored_body',
-                [],
-                (int) $swap['id']
+                $this->swapDatesReplace(
+                    $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0)) ?? [],
+                    $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0)) ?? []
+                ),
+                (int) $swap['id'],
+                '/employee/swaps'
             );
         }
 
@@ -326,5 +339,16 @@ final class AdminSwapController
         $this->swapRequests->delete((int) $swap['id']);
 
         return Response::redirect($this->base() . '/admin/swap-requests?success=deleted');
+    }
+
+    /** Valeurs de remplacement (:req_date/:tgt_date/:store) pour les notifications d'échange appliqué par un admin. */
+    private function swapDatesReplace(array $reqShift, array $tgtShift): array
+    {
+        $store = $this->stores->findById((int) ($reqShift['store_id'] ?? $tgtShift['store_id'] ?? 0));
+        return [
+            'req_date' => $reqShift['shift_date'] ?? '',
+            'tgt_date' => $tgtShift['shift_date'] ?? '',
+            'store'    => $store['name'] ?? '',
+        ];
     }
 }
