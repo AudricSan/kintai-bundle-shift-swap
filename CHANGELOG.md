@@ -12,6 +12,7 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 - Aucun changement fonctionnel — bump de version pour aligner ce bundle sur la ligne 1.1.0 commune à tous les bundles officiels.
 - Les huit notifications d'échange de shift (demande, acceptation/refus par le collègue, annulation, application/approbation/refus/suppression par un admin) ne disaient rien des shifts concernés et ne menaient nulle part au clic. Le corps précise désormais les dates des deux shifts et le magasin (le collègue nommé pour les notifications entre employés) — `notif_swap_*_body` (Kintai Core) gagnent les placeholders `:colleague`/`:my_date`/`:target_date`/`:req_date`/`:tgt_date`/`:store` selon le cas. Le clic renvoie vers `/employee/swaps`. **Nécessite** la version de Kintai Core introduisant le paramètre `$link` sur `notify()`/`notifyMany()`.
+- Le CSS (`.swap-card*`/`.swap-form-row*`/`.swap-actions`) vivait mélangé au fichier Core `features/employee.css` (page espace employé), pas dans ce dépôt. Il vit maintenant dans `public/css/shift-swap.css`, fourni par ce bundle via `Bundle::loadAssetsFrom()`/`bundle_asset()`. **Nécessite** `kintai_core.min: "0.2.0"`.
 
 ## [1.0.0] - 2026-09-19
 
