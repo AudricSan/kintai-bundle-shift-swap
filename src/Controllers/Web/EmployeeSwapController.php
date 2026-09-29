@@ -155,7 +155,14 @@ final class EmployeeSwapController
             'target_id' => $targetId,
         ], (int) $myShift['store_id']);
 
-        $this->notifs->notify($targetId, 'swap_requested', 'notif_swap_requested_body', [], (int) ($savedSwap['id'] ?? 0));
+        $this->notifs->notify(
+            $targetId,
+            'swap_requested',
+            'notif_swap_requested_body',
+            $this->swapReplace($myShift, $targetShift, $userId),
+            (int) ($savedSwap['id'] ?? 0),
+            '/employee/swaps'
+        );
 
         return Response::redirect($this->base() . '/employee/swaps?success=created');
     }
@@ -182,7 +189,16 @@ final class EmployeeSwapController
             'requester_id' => $swap['requester_id'] ?? null,
         ], (int) ($swap['store_id'] ?? 0) ?: null);
 
-        $this->notifs->notify((int) ($swap['requester_id'] ?? 0), 'swap_peer_accepted', 'notif_swap_peer_accepted_body', [], (int) $swap['id']);
+        $myShift     = $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0));
+        $targetShift = $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0));
+        $this->notifs->notify(
+            (int) ($swap['requester_id'] ?? 0),
+            'swap_peer_accepted',
+            'notif_swap_peer_accepted_body',
+            $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
+            (int) $swap['id'],
+            '/employee/swaps'
+        );
 
         return Response::redirect($this->base() . '/employee/swaps?success=accepted');
     }
@@ -206,7 +222,16 @@ final class EmployeeSwapController
             'requester_id' => $swap['requester_id'] ?? null,
         ], (int) ($swap['store_id'] ?? 0) ?: null);
 
-        $this->notifs->notify((int) ($swap['requester_id'] ?? 0), 'swap_peer_refused', 'notif_swap_peer_refused_body', [], (int) $swap['id']);
+        $myShift     = $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0));
+        $targetShift = $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0));
+        $this->notifs->notify(
+            (int) ($swap['requester_id'] ?? 0),
+            'swap_peer_refused',
+            'notif_swap_peer_refused_body',
+            $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
+            (int) $swap['id'],
+            '/employee/swaps'
+        );
 
         return Response::redirect($this->base() . '/employee/swaps?success=refused');
     }
@@ -228,9 +253,32 @@ final class EmployeeSwapController
         $this->swapRequests->save($cancelledSwap);
         $this->auditLogger->logUpdate($request, 'swap.cancelled', 'shift_swap_request', (int) $swap['id'], $swap, $cancelledSwap, []);
 
-        $this->notifs->notify((int) ($swap['target_user_id'] ?? 0), 'swap_cancelled', 'notif_swap_cancelled_body', [], (int) $swap['id']);
+        $myShift     = $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0));
+        $targetShift = $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0));
+        $this->notifs->notify(
+            (int) ($swap['target_user_id'] ?? 0),
+            'swap_cancelled',
+            'notif_swap_cancelled_body',
+            $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
+            (int) $swap['id'],
+            '/employee/swaps'
+        );
 
         return Response::redirect($this->base() . '/employee/swaps?success=cancelled');
+    }
+
+    /** Valeurs de remplacement (:colleague/:my_date/:target_date/:store) pour les notifications d'échange. */
+    private function swapReplace(array $myShift, array $targetShift, int $colleagueId): array
+    {
+        $colleague     = $this->users->findById($colleagueId);
+        $colleagueName = $colleague['display_name'] ?? $colleague['email'] ?? ('#' . $colleagueId);
+        $store         = $this->stores->findById((int) ($myShift['store_id'] ?? $targetShift['store_id'] ?? 0));
+        return [
+            'colleague'   => $colleagueName,
+            'my_date'     => $myShift['shift_date'] ?? '',
+            'target_date' => $targetShift['shift_date'] ?? '',
+            'store'       => $store['name'] ?? '',
+        ];
     }
 
     private function buildUsersMap(): array
