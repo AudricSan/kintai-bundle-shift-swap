@@ -14,6 +14,9 @@ function swapShiftLabel(array $shifts_map, int $shiftId): string {
     return htmlspecialchars(substr($s['start_time'] ?? '', 0, 5) . ' – ' . substr($s['end_time'] ?? '', 0, 5) . ' · ' . ($s['shift_date'] ?? ''));
 }
 ?>
+<?php if ($shiftSwapCss = bundle_asset('shift-swap', 'css/shift-swap.css')): ?>
+<link rel="stylesheet" href="<?= $shiftSwapCss ?>">
+<?php endif; ?>
 
 <div class="page-header">
     <h2 class="page-header__title"><?= __('swaps') ?></h2>

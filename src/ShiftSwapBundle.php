@@ -41,5 +41,6 @@ final class ShiftSwapBundle extends Bundle
     {
         $this->loadViewsFrom($this->getPath() . '/Views', 'shift-swap');
         $this->loadRoutesFrom($this->getPath() . '/routes.php');
+        $this->loadAssetsFrom('public');
     }
 }

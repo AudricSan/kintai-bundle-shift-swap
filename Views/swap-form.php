@@ -28,6 +28,9 @@ if (!function_exists('kintai_admin_swap_shift_label')) {
 
 echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->render();
 ?>
+<?php if ($shiftSwapCss = bundle_asset('shift-swap', 'css/shift-swap.css')): ?>
+<link rel="stylesheet" href="<?= $shiftSwapCss ?>">
+<?php endif; ?>
 
 <div class="page-header">
     <h2 class="page-header__title"><?= __('create_swap') ?></h2>
