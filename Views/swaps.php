@@ -54,7 +54,7 @@ $pendingReceived = array_values(array_filter(
         ->column(__('received_on'), fn($s) => '<span class="text-sm-muted">' . htmlspecialchars(substr($s['created_at'] ?? '', 0, 10)) . '</span>')
         ->column(__('actions'), function($s) use ($BASE_URL) {
             return '<form method="POST" action="' . $BASE_URL . '/employee/swaps/' . (int)$s['id'] . '/accept" class="form-inline">' . csrf_field() . Button::make(__('accept'))->primary()->sm()->submit()->render() . '</form>'
-                . '<form method="POST" action="' . $BASE_URL . '/employee/swaps/' . (int)$s['id'] . '/refuse" class="form-inline" onsubmit="return confirm(\'' . __('confirm') . '?\')">' . csrf_field() . Button::make(__('refuse'))->danger()->sm()->submit()->render() . '</form>';
+                . '<form method="POST" action="' . $BASE_URL . '/employee/swaps/' . (int)$s['id'] . '/refuse" class="form-inline" data-confirm="' . htmlspecialchars(__('confirm') . '?', ENT_QUOTES) . '">' . csrf_field() . Button::make(__('refuse'))->danger()->sm()->submit()->render() . '</form>';
         }, 'swap-actions')
         ->render() ?>
 </div>
@@ -91,7 +91,7 @@ $pendingReceived = array_values(array_filter(
                 $status = $s['status'] ?? 'pending';
                 $isPeerPending = $status === 'pending' && ($s['accepted_at'] ?? null) === null;
                 if (!$isPeerPending) return '';
-                return '<form method="POST" action="' . $BASE_URL . '/employee/swaps/' . (int)$s['id'] . '/cancel" class="form-inline" onsubmit="return confirm(\'' . __('confirm_cancel_request') . '\')">'
+                return '<form method="POST" action="' . $BASE_URL . '/employee/swaps/' . (int)$s['id'] . '/cancel" class="form-inline" data-confirm="' . htmlspecialchars(__('confirm_cancel_request'), ENT_QUOTES) . '">'
                     . csrf_field() . Button::make(__('cancel'))->ghost()->sm()->submit()->render() . '</form>';
             })
             ->render();
