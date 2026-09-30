@@ -46,7 +46,7 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
         <div class="mb-md">
             <label class="form-label"><?= __('step_1_choose_employees') ?></label>
             <form method="GET" action="<?= $BASE_URL ?>/admin/swap-requests/create" class="swap-form-row">
-                <select name="requester_id" class="form-control" onchange="this.form.submit()">
+                <select name="requester_id" class="form-control" data-submit-on-change>
                     <option value="0">— <?= __('requester') ?> —</option>
                     <?php foreach ($employees as $u): ?>
                         <option value="<?= (int) $u['id'] ?>" <?= (int) $u['id'] === $requester_id ? 'selected' : '' ?>>
@@ -54,7 +54,7 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <select name="target_id" class="form-control" onchange="this.form.submit()">
+                <select name="target_id" class="form-control" data-submit-on-change>
                     <option value="0">— <?= __('target') ?> —</option>
                     <?php foreach ($employees as $u): ?>
                         <option value="<?= (int) $u['id'] ?>" <?= (int) $u['id'] === $target_id ? 'selected' : '' ?>>
