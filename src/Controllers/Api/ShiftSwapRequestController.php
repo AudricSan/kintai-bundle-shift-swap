@@ -6,6 +6,8 @@ namespace kintai\Bundles\Installed\ShiftSwap\Controllers\Api;
 
 use kintai\Core\Api\Paginator;
 use kintai\Core\Auth\PermissionService;
+use kintai\Core\Exceptions\ForbiddenException;
+use kintai\Core\Exceptions\ValidationException;
 use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
 use kintai\Core\Request;
 use kintai\Core\Response;
@@ -19,9 +21,20 @@ use kintai\Core\Services\AuditLogger;
  * un store pouvait ainsi lire/modifier/supprimer une demande d'échange de n'importe
  * quel autre store. Corrigé via PermissionService::requireOwnedResource() (RBAC-V2),
  * qui re-vérifie la permission sur le store réel de la ressource après chargement.
+ *
+ * Régression (audit du 03/10/2026) : store() et update() fusionnaient le JSON brut du client. Un `id`
+ * dans le corps d'un POST écrasait la demande de quelqu'un d'autre (save() fait un upsert sur l'id,
+ * ce qui contournait requireSwap()), et `status`, `approved_by_id`… étaient acceptés tels quels.
+ * Seuls les champs de la liste blanche sont maintenant acceptés ; le statut initial est `pending`.
  */
 final class ShiftSwapRequestController
 {
+    /** Champs qu'un client peut renseigner à la création (store_id, requester_id, status et created_at sont imposés ou contrôlés). */
+    private const CREATE_FIELDS = ['target_user_id', 'requester_shift_id', 'target_shift_id', 'reason'];
+
+    /** Champs modifiables ensuite ; le magasin, le demandeur et les shifts ne changent jamais. */
+    private const UPDATE_FIELDS = ['status', 'reason', 'target_user_id'];
+
     public function __construct(
         private readonly ShiftSwapRequestRepositoryInterface $swapRequests,
         private readonly AuditLogger $auditLogger,
@@ -61,9 +74,26 @@ final class ShiftSwapRequestController
     /** POST /api/v1/shift-swap-requests */
     public function store(Request $request): Response
     {
-        $data  = $request->json() ?? [];
+        $authUser = $this->authUser($request);
+        $body     = $request->json() ?? [];
+
+        $storeId = (int) ($body['store_id'] ?? 0);
+        if ($storeId <= 0) {
+            throw new ValidationException(['store_id' => __('error_api_store_id_required')]);
+        }
+        // Le middleware ne voit le magasin que si le client l'a fourni : on revérifie sur celui qu'on va écrire.
+        if (!$this->permissions->can($authUser, 'swaps.create', $storeId)) {
+            throw new ForbiddenException(__('error_permission_insufficient', ['key' => 'swaps.create']));
+        }
+
+        $data = array_intersect_key($body, array_flip(self::CREATE_FIELDS)) + [
+            'store_id'     => $storeId,
+            'requester_id' => (int) ($body['requester_id'] ?? ($authUser['id'] ?? 0)),
+            'status'       => 'pending',
+            'created_at'   => date('Y-m-d H:i:s'),
+        ];
         $saved = $this->swapRequests->save($data);
-        $this->auditLogger->log($request, 'shift_swap_request.created', 'shift_swap_request', resourceId: (int) ($saved['id'] ?? 0) ?: null, details: $data, storeId: isset($data['store_id']) ? (int) $data['store_id'] : null);
+        $this->auditLogger->log($request, 'shift_swap_request.created', 'shift_swap_request', resourceId: (int) ($saved['id'] ?? 0) ?: null, details: $data, storeId: $storeId);
         return Response::json($saved, 201);
     }
 
@@ -72,9 +102,15 @@ final class ShiftSwapRequestController
     {
         $old = $this->requireSwap($request, 'swaps.update');
         $id  = (int) $old['id'];
-        $data  = $request->json() ?? [];
-        $saved = $this->swapRequests->save(array_merge($data, ['id' => $id]));
-        $this->auditLogger->logUpdate($request, 'shift_swap_request.updated', 'shift_swap_request', resourceId: $id, oldData: $old, newData: $saved, extraContext: $data, storeId: isset($data['store_id']) ? (int) $data['store_id'] : null);
+        $data = array_intersect_key($request->json() ?? [], array_flip(self::UPDATE_FIELDS)) + ['id' => $id];
+        // Une approbation est tracée avec son auteur et sa date.
+        if (($data['status'] ?? null) === 'approved') {
+            $data['approved_by_id'] = (int) ($this->authUser($request)['id'] ?? 0);
+            $data['approved_at']    = date('Y-m-d H:i:s');
+        }
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        $saved = $this->swapRequests->save($data);
+        $this->auditLogger->logUpdate($request, 'shift_swap_request.updated', 'shift_swap_request', resourceId: $id, oldData: $old, newData: $saved, extraContext: $data, storeId: (int) ($old['store_id'] ?? 0) ?: null);
         return Response::json($saved);
     }
 

@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Fixed
+
+- Sécurité — `POST /api/v1/shift-swap-requests` fusionnait le JSON brut du client dans `save()` (upsert dès qu'un `id` est présent) : un `id` écrasait la demande de quelqu'un d'autre en contournant `requireSwap()`, et `status`/`approved_by_id` étaient acceptés tels quels. Seuls `target_user_id`, `requester_shift_id`, `target_shift_id` et `reason` sont lus ; le magasin est obligatoire et `swaps.create` est revérifié dessus, le demandeur est l'appelant, le statut initial est `pending`. `PUT` ne modifie plus que le statut, le motif et le collègue ciblé (une approbation enregistre son auteur et sa date) ; magasin, demandeur et shifts ne changent jamais.
+
 ### Changed
 
 - Compatibilité avec la Content-Security-Policy stricte de Kintai (`script-src 'self' 'nonce-…'`, sans `'unsafe-inline'`) : les 5 attributs d'événements inline des vues (`onclick=`/`onchange=`/`onsubmit=`/`oninput=`) sont remplacés par des attributs `data-*` (`data-on-click`, `data-submit-on-change`, `data-confirm`… gérés par `csp-actions.js` du Core). Sans ce changement, les boutons, sélecteurs et confirmations de ces vues ne font plus rien sous la nouvelle politique, sans aucune erreur visible. **Nécessite Kintai Core 0.3.0 ou plus** (`kintai_core.min`), version qui introduit `csp-actions.js` et la CSP à nonce. `tests.yml` échoue désormais si un handler inline, un lien `javascript:` ou un `<script>` sans nonce réapparaît dans `Views/` ou `src/`.
