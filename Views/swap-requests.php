@@ -44,6 +44,10 @@ echo Flash::fromQuery('success', [
     'created'  => __('swap_created_admin'),
     'deleted'  => __('swap_deleted'),
 ])->render();
+echo Flash::fromQuery('error', [
+    'invalid_state' => __('action_impossible'),
+    'swap_conflict' => __('swap_conflict_error'),
+])->render();
 ?>
 <div class="page-header">
     <h2 class="page-header__title"><?= __('swap_requests') ?> <span class="page-count">(<?= count($swaps) ?>)</span></h2>
