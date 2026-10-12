@@ -240,16 +240,33 @@ final class AdminSwapController
         }
         $this->assertStoreAccess($request, (int) ($swap['store_id'] ?? 0));
 
-        $reqShiftId = (int) ($swap['requester_shift_id'] ?? 0);
-        $tgtShiftId = (int) ($swap['target_shift_id'] ?? 0);
-        if ($reqShiftId > 0 && $tgtShiftId > 0) {
-            $reqShift = $this->shifts->findById($reqShiftId);
-            $tgtShift = $this->shifts->findById($tgtShiftId);
-            if ($reqShift !== null && $tgtShift !== null) {
-                $this->shifts->save(array_merge($reqShift, ['user_id' => (int) $tgtShift['user_id']]));
-                $this->shifts->save(array_merge($tgtShift, ['user_id' => (int) $reqShift['user_id']]));
-            }
+        // Seule une demande en attente s'approuve : sinon un rejeu (double clic, formulaire rechargé)
+        // ré-échangeait les shifts et annulait l'échange déjà appliqué.
+        if (($swap['status'] ?? '') !== 'pending') {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=invalid_state');
         }
+
+        $requesterId = (int) ($swap['requester_id'] ?? 0);
+        $targetId    = (int) ($swap['target_user_id'] ?? 0);
+        $reqShiftId  = (int) ($swap['requester_shift_id'] ?? 0);
+        $tgtShiftId  = (int) ($swap['target_shift_id'] ?? 0);
+        $reqShift    = $reqShiftId > 0 ? $this->shifts->findById($reqShiftId) : null;
+        $tgtShift    = $tgtShiftId > 0 ? $this->shifts->findById($tgtShiftId) : null;
+
+        // Les deux shifts doivent encore appartenir au demandeur et à la cible : s'ils ont été
+        // réaffectés depuis la demande, l'échange brouillerait les affectations.
+        if ($reqShift === null || $tgtShift === null
+            || (int) $reqShift['user_id'] !== $requesterId
+            || (int) $tgtShift['user_id'] !== $targetId) {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=invalid_state');
+        }
+        if ($this->hasOtherShiftOnDate($requesterId, $tgtShift['shift_date'] ?? '', $reqShiftId)
+            || $this->hasOtherShiftOnDate($targetId, $reqShift['shift_date'] ?? '', $tgtShiftId)) {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=swap_conflict');
+        }
+
+        $this->shifts->save(array_merge($reqShift, ['user_id' => $targetId]));
+        $this->shifts->save(array_merge($tgtShift, ['user_id' => $requesterId]));
 
         $this->swapRequests->save(array_merge($swap, ['status' => 'accepted']));
         $this->auditLogger->logUpdate($request, 'swap.approved', 'shift_swap_request', (int) $swap['id'], $swap, array_merge($swap, ['status' => 'accepted']), [], (int) ($swap['store_id'] ?? 0) ?: null);
@@ -274,6 +291,10 @@ final class AdminSwapController
             throw new NotFoundException(__('error_request_not_found'));
         }
         $this->assertStoreAccess($request, (int) ($swap['store_id'] ?? 0));
+        // Refuser un échange déjà appliqué le marquait « refusé » sans restituer les shifts.
+        if (($swap['status'] ?? '') !== 'pending') {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=invalid_state');
+        }
         $this->swapRequests->save(array_merge($swap, ['status' => 'refused']));
         $this->auditLogger->logUpdate($request, 'swap.refused', 'shift_swap_request', (int) $swap['id'], $swap, array_merge($swap, ['status' => 'refused']), [], (int) ($swap['store_id'] ?? 0) ?: null);
         $this->notifs->notify(
@@ -312,7 +333,12 @@ final class AdminSwapController
             if ($reqShiftId > 0 && $tgtShiftId > 0) {
                 $reqShift = $this->shifts->findById($reqShiftId);
                 $tgtShift = $this->shifts->findById($tgtShiftId);
-                if ($reqShift !== null && $tgtShift !== null) {
+                // Restitution seulement si les shifts sont toujours dans l'état issu de l'échange :
+                // sinon ils ont été réaffectés depuis et les « rendre » écraserait ce changement.
+                $stillSwapped = $reqShift !== null && $tgtShift !== null
+                    && (int) $reqShift['user_id'] === $targetId
+                    && (int) $tgtShift['user_id'] === $requesterId;
+                if ($stillSwapped) {
                     $this->shifts->save(array_merge($reqShift, ['user_id' => $requesterId]));
                     $this->shifts->save(array_merge($tgtShift, ['user_id' => $targetId]));
                 }
