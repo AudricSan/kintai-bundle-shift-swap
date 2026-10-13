@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftSwap\Controllers\Api;
 
-use kintai\Core\Api\Paginator;
-use kintai\Core\Auth\PermissionService;
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Exceptions\ValidationException;
+use kintai\Contract\Http\Paginator;
+use kintai\Contract\Auth\PermissionService;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Exceptions\ValidationException;
 use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
 
 /**
  * Régression (audit RBAC du 11/09/2026) : ApiPermissionMiddleware ne peut borner

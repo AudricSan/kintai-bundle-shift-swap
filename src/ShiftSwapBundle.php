@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftSwap;
 
-use kintai\Core\BundleContract\Bundle;
+use kintai\Contract\Bundle;
 
 /**
  * Comme TimeOff et HiringReport, ce bundle n'enregistre pas son propre
@@ -24,7 +24,7 @@ final class ShiftSwapBundle extends Bundle
 
     public function getVersion(): string
     {
-        return '1.1.0';
+        return '1.2.0';
     }
 
     public function getLabel(): string
