@@ -9,6 +9,7 @@ use kintai\Core\Exceptions\NotFoundException;
 use kintai\Core\Repositories\ShiftRepositoryInterface;
 use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
 use kintai\Core\Repositories\StoreRepositoryInterface;
+use kintai\Core\Repositories\StoreUserRepositoryInterface;
 use kintai\Core\Repositories\UserRepositoryInterface;
 use kintai\Core\Request;
 use kintai\Core\Response;
@@ -28,6 +29,9 @@ final class AdminSwapController
         private readonly NotificationService $notifs,
         private readonly StoreRepositoryInterface $stores,
         private readonly UserRepositoryInterface $users,
+        // Requis par le trait HasAdminAccess (memberUserIds) : sans lui, un gérant limité à ses magasins
+        // provoquait une erreur 500 sur /admin/swap-requests/create.
+        private readonly StoreUserRepositoryInterface $storeUsers,
     ) {}
 
     /**
