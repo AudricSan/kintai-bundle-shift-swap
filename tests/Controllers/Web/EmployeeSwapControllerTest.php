@@ -8,7 +8,7 @@ namespace kintai\Tests\Bundles\ShiftSwap\Controllers\Web;
 use kintai\Bundles\Installed\ShiftSwap\Controllers\Web\EmployeeSwapController;
 use kintai\Core\Exceptions\ForbiddenException;
 use kintai\Core\Repositories\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
+use kintai\Bundles\Installed\ShiftSwap\Repositories\ShiftSwapRequestRepositoryInterface;
 use kintai\Core\Repositories\ShiftTypeRepositoryInterface;
 use kintai\Core\Repositories\StoreRepositoryInterface;
 use kintai\Core\Repositories\StoreUserRepositoryInterface;

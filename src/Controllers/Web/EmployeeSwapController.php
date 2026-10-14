@@ -6,7 +6,7 @@ namespace kintai\Bundles\Installed\ShiftSwap\Controllers\Web;
 
 use kintai\Contract\Exceptions\ForbiddenException;
 use kintai\Contract\Data\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
+use kintai\Bundles\Installed\ShiftSwap\Repositories\ShiftSwapRequestRepositoryInterface;
 use kintai\Contract\Data\ShiftTypeRepositoryInterface;
 use kintai\Contract\Data\StoreRepositoryInterface;
 use kintai\Contract\Data\StoreUserRepositoryInterface;

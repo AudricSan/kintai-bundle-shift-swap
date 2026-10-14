@@ -7,7 +7,7 @@ namespace kintai\Bundles\Installed\ShiftSwap\Providers;
 use kintai\Contract\Container;
 use kintai\Contract\Provider\PendingRequest;
 use kintai\Contract\Provider\PendingRequestsProvider;
-use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
+use kintai\Bundles\Installed\ShiftSwap\Repositories\ShiftSwapRequestRepositoryInterface;
 
 /**
  * Demandes d'échange de shift en attente, pour la page « Demandes » et le compteur du tableau de bord du Core
