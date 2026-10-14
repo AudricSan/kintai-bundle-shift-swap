@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftSwap\Controllers\Web;
 
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Exceptions\NotFoundException;
-use kintai\Core\Repositories\ShiftRepositoryInterface;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Exceptions\NotFoundException;
+use kintai\Contract\Data\ShiftRepositoryInterface;
 use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Repositories\UserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
-use kintai\Core\Services\NotificationService;
-use kintai\UI\Controller\Web\HasAdminAccess;
-use kintai\UI\ViewRenderer;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
+use kintai\Contract\Services\NotificationService;
+use kintai\Contract\Http\Concerns\HasAdminAccess;
+use kintai\Contract\View\ViewRenderer;
 
 final class AdminSwapController
 {

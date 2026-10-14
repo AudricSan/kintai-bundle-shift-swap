@@ -1,7 +1,7 @@
 <?php
-use kintai\UI\Components\Badge;
-use kintai\UI\Components\Button;
-use kintai\UI\Components\Table;
+use kintai\Contract\View\Components\Badge;
+use kintai\Contract\View\Components\Button;
+use kintai\Contract\View\Components\Table;
 
 /** @var array[]  $sent        swap_requests envoyées */
 /** @var array[]  $received    swap_requests reçues */
@@ -25,7 +25,7 @@ function swapShiftLabel(array $shifts_map, int $shiftId): string {
     </div>
 </div>
 
-<?= \kintai\UI\Components\Flash::fromQuery('success', [
+<?= \kintai\Contract\View\Components\Flash::fromQuery('success', [
     'created' => __('swap_request_sent'), 'accepted' => __('swap_accepted_wait_manager'),
     'refused' => __('rejected'), 'cancelled' => __('timeoff_cancelled'),
 ])->render() ?>
