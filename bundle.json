@@ -2,7 +2,7 @@
     "slug": "shift-swap",
     "name": "Échanges de shifts",
     "version": "1.2.0",
-    "description": "Demandes d'échange de shifts entre employés, avec validation par un manager.",
+    "description": "Demandes d'échange de shifts entre employés : proposition, acceptation, application par un manager.",
     "author": {
         "name": "AudricSan",
         "url": "https://github.com/AudricSan"

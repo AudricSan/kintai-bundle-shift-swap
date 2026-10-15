@@ -20,6 +20,7 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ### Fixed
 
+- Description de `bundle.json` alignée sur celle de `lang/fr.json`, pour que le catalogue et la page Bundles affichent le même texte.
 - Widget « Échanges en attente » du tableau de bord gérant : carte complète avec sa marge haute (`card card--mt`), comme le demande le contrat des widgets ; elle se collait au widget précédent depuis la reprise du Core, où elle partageait une rangée avec les congés.
 - `/admin/swap-requests/create` répondait 500 pour un gérant limité à ses magasins : `AdminSwapController` n'avait pas le dépôt des membres de magasin que le trait `HasAdminAccess` utilise. Le contrôleur le reçoit maintenant (`StoreUserRepositoryInterface`).
 - Sécurité — l'approbation d'un échange appliquait les shifts sans garde : approuver une demande déjà acceptée ré-échangeait les shifts (et annulait l'échange), approuver une demande refusée l'appliquait, refuser un échange appliqué le marquait « refusé » sans restituer les shifts. Seule une demande en attente se décide désormais, l'échange n'est appliqué que si les deux shifts appartiennent encore au demandeur et à la cible, un conflit de jour (deux shifts le même jour) est refusé, et la suppression d'un échange n'écrase plus des shifts réaffectés entre-temps.
