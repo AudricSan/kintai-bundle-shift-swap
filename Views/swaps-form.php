@@ -1,6 +1,6 @@
 <?php
-use kintai\UI\Components\Button;
-use kintai\UI\Components\Card;
+use kintai\Contract\View\Components\Button;
+use kintai\Contract\View\Components\Card;
 
 /** @var array[] $my_shifts      shifts futurs de l'employé */
 /** @var array[] $colleagues     utilisateurs du même store */

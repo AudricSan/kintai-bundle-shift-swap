@@ -1,6 +1,6 @@
 <?php
-use kintai\UI\Components\Button;
-use kintai\UI\Components\Flash;
+use kintai\Contract\View\Components\Button;
+use kintai\Contract\View\Components\Flash;
 
 /** @var array[] $employees        employés des stores gérés */
 /** @var int     $requester_id */
