@@ -41,12 +41,13 @@ final class ShiftSwapRequestController
         private readonly PermissionService $permissions,
     ) {}
 
-    /** GET /api/v1/shift-swap-requests?store_id=X&requester_id=Y&status=Z&page=1&limit=20 */
+    /** GET /api/v1/shift-swap-requests?store_id=X&requester_id=Y&user_id=U&status=Z&page=1&limit=20 (user_id : demandeur ou destinataire) */
     public function index(Request $request): Response
     {
         [$page, $limit] = Paginator::params($request);
         $storeId     = $request->query('store_id');
         $requesterId = $request->query('requester_id');
+        $involvedId  = $request->query('user_id');
         $status      = $request->query('status');
 
         if ($storeId !== null && $status !== null) {
@@ -55,11 +56,26 @@ final class ShiftSwapRequestController
             $items = $this->swapRequests->findByStore((int) $storeId);
         } elseif ($requesterId !== null) {
             $items = $this->swapRequests->findByRequester((int) $requesterId);
+        } elseif ($involvedId !== null) {
+            // Demandes où ce compte est demandeur ou destinataire (une seule fois chacune).
+            $items = [];
+            foreach (array_merge($this->swapRequests->findByRequester((int) $involvedId), $this->swapRequests->findByTarget((int) $involvedId)) as $s) {
+                $items[(int) $s['id']] = $s;
+            }
+            $items = array_values($items);
         } else {
             $items = [];
         }
 
-        $items = $this->permissions->restrictToScope($this->authUser($request), 'swaps.view', $items);
+        // Éléments couverts par la permission, PLUS ceux de l'appelant : un employé sans swaps.view lit les siens avec
+        // ?user_id=<lui> (règle self de la route). Avant, restrictToScope() vidait toujours sa liste.
+        $authUser  = $this->authUser($request);
+        $authId    = (int) ($authUser['id'] ?? 0);
+        $scopedIds = array_column($this->permissions->restrictToScope($authUser, 'swaps.view', $items), 'id');
+        $items     = array_values(array_filter(
+            $items,
+            fn(array $i): bool => in_array($i['id'] ?? null, $scopedIds, true) || (int) ($i['requester_id'] ?? 0) === $authId || (int) ($i['target_id'] ?? 0) === $authId,
+        ));
 
         return Response::json(Paginator::paginate($items, $page, $limit));
     }
