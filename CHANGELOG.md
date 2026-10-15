@@ -20,6 +20,7 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ### Fixed
 
+- API en libre-service (audit n°8 de Kintai) : un employé sans permission lit enfin ses propres demandes d'échange (comme demandeur ou destinataire) avec `GET /api/v1/shift-swap-requests?user_id=<son id>` (nouveau filtre `user_id`, ouvert en libre-service). La liste lui était toujours renvoyée vide : le filtrage par permission retirait aussi ses propres éléments. Il ne voit jamais ceux des autres ; un gérant garde exactement sa vue. Nouveau test `ApiSelfServiceListTest`.
 - Sécurité — des formulaires de filtre envoyés en GET contenaient le jeton CSRF de la session, qui se retrouvait dans l'URL (historique du navigateur, journaux d'accès du serveur, liens copiés). Les formulaires GET ne le portent plus ; nouveau test `NoCsrfTokenInGetFormsTest` qui échoue si l'un d'eux le réintroduit.
 - Description de `bundle.json` alignée sur celle de `lang/fr.json`, pour que le catalogue et la page Bundles affichent le même texte.
 - Widget « Échanges en attente » du tableau de bord gérant : carte complète avec sa marge haute (`card card--mt`), comme le demande le contrat des widgets ; elle se collait au widget précédent depuis la reprise du Core, où elle partageait une rangée avec les congés.
