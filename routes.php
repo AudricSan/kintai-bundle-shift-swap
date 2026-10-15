@@ -44,7 +44,7 @@ $router->group('/admin', function ($r) {
 // =============================================================================
 
 $router->group('/api/v1', function ($r) {
-    $r->get('/shift-swap-requests',         [ApiShiftSwapRequestController::class, 'index'],   name: 'api.v1.swap.index', permission: 'swaps.view');
+    $r->get('/shift-swap-requests',         [ApiShiftSwapRequestController::class, 'index'],   name: 'api.v1.swap.index', permission: ['perm' => 'swaps.view', 'self' => 'user_id']);
     $r->post('/shift-swap-requests',        [ApiShiftSwapRequestController::class, 'store'],   name: 'api.v1.swap.store', permission: 'swaps.create');
     $r->get('/shift-swap-requests/{id}',    [ApiShiftSwapRequestController::class, 'show'],    name: 'api.v1.swap.show', permission: 'swaps.view');
     $r->put('/shift-swap-requests/{id}',    [ApiShiftSwapRequestController::class, 'update'],  name: 'api.v1.swap.update', permission: 'swaps.update');
