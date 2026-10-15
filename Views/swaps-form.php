@@ -35,7 +35,6 @@ function swapLabel(array $shift, array $types_map): string {
         <div class="mb-md">
             <label class="form-label"><?= __('step_1_choose_colleague') ?></label>
             <form method="GET" action="<?= route_url('employee.swaps.create') ?>" class="swap-form-row">
-                <?= csrf_field() ?>
                 <select name="target_id" class="form-control" data-submit-on-change>
                     <option value="0">— <?= __('select') ?> —</option>
                     <?php foreach ($colleagues as $c): ?>

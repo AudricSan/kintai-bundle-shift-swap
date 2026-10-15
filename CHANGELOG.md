@@ -20,6 +20,7 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ### Fixed
 
+- Sécurité — des formulaires de filtre envoyés en GET contenaient le jeton CSRF de la session, qui se retrouvait dans l'URL (historique du navigateur, journaux d'accès du serveur, liens copiés). Les formulaires GET ne le portent plus ; nouveau test `NoCsrfTokenInGetFormsTest` qui échoue si l'un d'eux le réintroduit.
 - Description de `bundle.json` alignée sur celle de `lang/fr.json`, pour que le catalogue et la page Bundles affichent le même texte.
 - Widget « Échanges en attente » du tableau de bord gérant : carte complète avec sa marge haute (`card card--mt`), comme le demande le contrat des widgets ; elle se collait au widget précédent depuis la reprise du Core, où elle partageait une rangée avec les congés.
 - `/admin/swap-requests/create` répondait 500 pour un gérant limité à ses magasins : `AdminSwapController` n'avait pas le dépôt des membres de magasin que le trait `HasAdminAccess` utilise. Le contrôleur le reçoit maintenant (`StoreUserRepositoryInterface`).
