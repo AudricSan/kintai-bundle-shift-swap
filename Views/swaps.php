@@ -3,6 +3,7 @@ use kintai\Contract\View\Components\Badge;
 use kintai\Contract\View\Components\Button;
 use kintai\Contract\View\Components\Table;
 
+/** @var int      $highlight_id échange désigné par une notification (0 = aucun) */
 /** @var array[]  $sent        swap_requests envoyées */
 /** @var array[]  $received    swap_requests reçues */
 /** @var array    $users_map   id → nom */
@@ -47,6 +48,7 @@ $pendingReceived = array_values(array_filter(
     </div>
     <?= Table::make()
         ->data($pendingReceived)
+        ->rowAttrs(fn($s) => (int) ($highlight_id ?? 0) > 0 && (int) ($s['id'] ?? 0) === (int) $highlight_id ? ['class' => 'tr--highlight'] : [])
         ->column(__('from'), fn($s) => htmlspecialchars($users_map[(int)($s['requester_id'] ?? 0)] ?? '—'))
         ->column(__('his_shift'), fn($s) => '<span class="text-sm">' . swapShiftLabel($shifts_map, (int)($s['requester_shift_id'] ?? 0)) . '</span>')
         ->column(__('my_shift'), fn($s) => '<span class="text-sm">' . swapShiftLabel($shifts_map, (int)($s['target_shift_id'] ?? 0)) . '</span>')
@@ -68,6 +70,7 @@ $pendingReceived = array_values(array_filter(
     <?php else:
         echo Table::make()
             ->data($sent)
+            ->rowAttrs(fn($s) => (int) ($highlight_id ?? 0) > 0 && (int) ($s['id'] ?? 0) === (int) $highlight_id ? ['class' => 'tr--highlight'] : [])
             ->column(__('staff'), fn($s) => htmlspecialchars($users_map[(int)($s['target_user_id'] ?? 0)] ?? '—'))
             ->column(__('my_shift'), fn($s) => '<span class="text-sm">' . swapShiftLabel($shifts_map, (int)($s['requester_shift_id'] ?? 0)) . '</span>')
             ->column(__('his_shift'), fn($s) => '<span class="text-sm">' . swapShiftLabel($shifts_map, (int)($s['target_shift_id'] ?? 0)) . '</span>')
@@ -104,6 +107,7 @@ $pendingReceived = array_values(array_filter(
     <div class="card-header"><h3 class="swap-card__title"><?= __('received_requests') ?> — <?= __('history') ?></h3></div>
     <?= Table::make()
         ->data($received)
+        ->rowAttrs(fn($s) => (int) ($highlight_id ?? 0) > 0 && (int) ($s['id'] ?? 0) === (int) $highlight_id ? ['class' => 'tr--highlight'] : [])
         ->column(__('from'), fn($s) => htmlspecialchars($users_map[(int)($s['requester_id'] ?? 0)] ?? '—'))
         ->column(__('his_shift'), fn($s) => '<span class="text-sm">' . swapShiftLabel($shifts_map, (int)($s['requester_shift_id'] ?? 0)) . '</span>')
         ->column(__('my_shift'), fn($s) => '<span class="text-sm">' . swapShiftLabel($shifts_map, (int)($s['target_shift_id'] ?? 0)) . '</span>')

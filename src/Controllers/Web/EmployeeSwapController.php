@@ -50,8 +50,15 @@ final class EmployeeSwapController
         usort($sent,     fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
         usort($received, fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
 
+        // L'employé voit ses échanges : les notifications correspondantes sont lues.
+        $swapIds = array_values(array_unique(array_map(fn(array $s) => (int) $s['id'], array_merge($sent, $received))));
+        if ($userId > 0 && $swapIds !== []) {
+            $this->notifs->markReadFor($userId, 'swap', $swapIds);
+        }
+
         return Response::html($this->view->render('shift-swap::swaps', [
             'title'      => 'Échanges de shifts',
+            'highlight_id' => (int) $request->query('highlight', 0),
             'sent'       => $sent,
             'received'   => $received,
             'users_map'  => $this->buildUsersMap(),
@@ -161,7 +168,7 @@ final class EmployeeSwapController
             'notif_swap_requested_body',
             $this->swapReplace($myShift, $targetShift, $userId),
             (int) ($savedSwap['id'] ?? 0),
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) ($savedSwap['id'] ?? 0)
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=created');
@@ -197,7 +204,7 @@ final class EmployeeSwapController
             'notif_swap_peer_accepted_body',
             $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=accepted');
@@ -230,7 +237,7 @@ final class EmployeeSwapController
             'notif_swap_peer_refused_body',
             $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=refused');
@@ -261,7 +268,7 @@ final class EmployeeSwapController
             'notif_swap_cancelled_body',
             $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=cancelled');
