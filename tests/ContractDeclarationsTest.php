@@ -115,9 +115,29 @@ final class ContractDeclarationsTest extends TestCase
 
     public function testNotificationTypes(): void
     {
-        $this->assertSame(['swap_requested', 'swap_peer_accepted', 'swap_peer_refused', 'swap_accepted', 'swap_refused', 'swap_cancelled'],
-            array_keys($this->bundle()->notificationTypes()));
-        $this->assertSame(['⇄'], array_values(array_unique($this->bundle()->notificationTypes())));
+        $declared = $this->bundle()->notificationTypes();
+        $this->assertSame(
+            ['swap_requested', 'swap_peer_accepted', 'swap_peer_refused', 'swap_accepted', 'swap_refused', 'swap_cancelled', 'swap_applied', 'swap_cancelled_restored'],
+            array_keys($declared)
+        );
+
+        // Chaque déclaration est valide pour le Core (format enrichi du contrat 1.23).
+        $types = [];
+        foreach ($declared as $type => $declaration) {
+            $types[$type] = \kintai\Contract\Extension\NotificationType::fromDeclaration($type, $declaration);
+            $this->assertSame('swap', $types[$type]->referenceType, 'l\'identifiant notifié est celui de la demande d\'échange');
+            $this->assertTrue($types[$type]->push);
+        }
+        // Les deux changements de planning ont leurs propres types, ils ne réutilisent plus shift_assigned du Core.
+        $this->assertSame('planning', $types['swap_applied']->category);
+        $this->assertSame('planning', $types['swap_cancelled_restored']->category);
+        $this->assertSame('requests', $types['swap_requested']->category);
+        foreach (['swap_accepted', 'swap_applied', 'swap_cancelled_restored'] as $byMail) {
+            $this->assertTrue($types[$byMail]->email, $byMail);
+        }
+        foreach (['swap_requested', 'swap_peer_accepted', 'swap_peer_refused', 'swap_refused', 'swap_cancelled'] as $pushOnly) {
+            $this->assertFalse($types[$pushOnly]->email, $pushOnly);
+        }
     }
 
     /** Le bundle n'apporte rien d'autre au Core. */

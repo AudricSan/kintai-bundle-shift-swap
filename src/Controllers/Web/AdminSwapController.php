@@ -154,11 +154,11 @@ final class AdminSwapController
 
         $this->notifs->notifyMany(
             [$requesterId, $targetId],
-            'shift_assigned',
+            'swap_applied',
             'notif_swap_applied_body',
             $this->swapDatesReplace($reqShift, $tgtShift),
             (int) ($savedSwap['id'] ?? 0),
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) ($savedSwap['id'] ?? 0)
         );
 
         return Response::redirect($this->base() . '/admin/swap-requests?success=created');
@@ -283,7 +283,7 @@ final class AdminSwapController
                 $this->shifts->findById($tgtShiftId) ?? []
             ),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
         return Response::redirect($this->base() . '/admin/swap-requests?success=approved');
     }
@@ -310,7 +310,7 @@ final class AdminSwapController
                 $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0)) ?? []
             ),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
         return Response::redirect($this->base() . '/admin/swap-requests?success=refused');
     }
@@ -349,7 +349,7 @@ final class AdminSwapController
             }
             $this->notifs->notifyMany(
                 array_filter([$requesterId, $targetId]),
-                'shift_assigned',
+                'swap_cancelled_restored',
                 'notif_swap_cancelled_restored_body',
                 $this->swapDatesReplace(
                     $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0)) ?? [],

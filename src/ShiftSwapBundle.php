@@ -138,17 +138,26 @@ final class ShiftSwapBundle extends Bundle
     }
 
     /**
-     * Types de notification (contrat 1.7).
+     * Types de notification, au format enrichi (contrat 1.23). L'identifiant passé à notify() est celui de la demande
+     * d'échange (reference_type « swap »). Seuls l'échange validé et les deux changements de planning (appliqué par un
+     * gestionnaire, rétabli après suppression) arrivent aussi par e-mail.
+     * `swap_applied` et `swap_cancelled_restored` remplacent le type `shift_assigned` du Core, que ce bundle
+     * réutilisait à tort.
      */
     public function notificationTypes(): array
     {
+        $push  = ['push' => true, 'email' => false];
+        $both  = ['push' => true, 'email' => true];
+
         return [
-            'swap_requested'     => '⇄',
-            'swap_peer_accepted' => '⇄',
-            'swap_peer_refused'  => '⇄',
-            'swap_accepted'      => '⇄',
-            'swap_refused'       => '⇄',
-            'swap_cancelled'     => '⇄',
+            'swap_requested'          => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_peer_accepted'      => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_peer_refused'       => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_accepted'           => ['icon' => '⇄', 'category' => 'requests', 'channels' => $both, 'reference_type' => 'swap'],
+            'swap_refused'            => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_cancelled'          => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_applied'            => ['icon' => '⇄', 'category' => 'planning', 'channels' => $both, 'reference_type' => 'swap'],
+            'swap_cancelled_restored' => ['icon' => '⇄', 'category' => 'planning', 'channels' => $both, 'reference_type' => 'swap'],
         ];
     }
 }
