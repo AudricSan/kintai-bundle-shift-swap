@@ -26,14 +26,14 @@ if (!function_exists('kintai_admin_swap_shift_label')) {
     }
 }
 
-echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->render();
+echo Flash::fromQuery('error', ['swap_conflict' => __('shift_swap_swap_conflict_error')])->render();
 ?>
 <?php if ($shiftSwapCss = bundle_asset('shift-swap', 'css/shift-swap.css')): ?>
 <link rel="stylesheet" href="<?= $shiftSwapCss ?>">
 <?php endif; ?>
 
 <div class="page-header">
-    <h2 class="page-header__title"><?= __('create_swap') ?></h2>
+    <h2 class="page-header__title"><?= __('shift_swap_create_swap') ?></h2>
     <div class="page-header__actions">
         <a href="<?= back_url($BASE_URL . '/admin/swap-requests') ?>" class="btn btn--ghost btn--sm">← <?= __('back') ?></a>
     </div>
@@ -44,10 +44,10 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
 
         <!-- Étape 1 : choisir les deux employés (rechargement GET) -->
         <div class="mb-md">
-            <label class="form-label"><?= __('step_1_choose_employees') ?></label>
+            <label class="form-label"><?= __('shift_swap_step_1_choose_employees') ?></label>
             <form method="GET" action="<?= $BASE_URL ?>/admin/swap-requests/create" class="swap-form-row">
                 <select name="requester_id" class="form-control" data-submit-on-change>
-                    <option value="0">— <?= __('requester') ?> —</option>
+                    <option value="0">— <?= __('shift_swap_requester') ?> —</option>
                     <?php foreach ($employees as $u): ?>
                         <option value="<?= (int) $u['id'] ?>" <?= (int) $u['id'] === $requester_id ? 'selected' : '' ?>>
                             <?= htmlspecialchars(kintai_admin_swap_employee_label($u)) ?>
@@ -55,7 +55,7 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
                     <?php endforeach; ?>
                 </select>
                 <select name="target_id" class="form-control" data-submit-on-change>
-                    <option value="0">— <?= __('target') ?> —</option>
+                    <option value="0">— <?= __('shift_swap_target') ?> —</option>
                     <?php foreach ($employees as $u): ?>
                         <option value="<?= (int) $u['id'] ?>" <?= (int) $u['id'] === $target_id ? 'selected' : '' ?>>
                             <?= htmlspecialchars(kintai_admin_swap_employee_label($u)) ?>
@@ -68,16 +68,16 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
 
         <?php if ($requester_id > 0 && $target_id > 0 && $requester_id !== $target_id): ?>
         <!-- Étape 2 : appliquer l'échange -->
-        <p class="text-muted text-sm mb-sm"><?= __('swap_conflict_hint') ?></p>
+        <p class="text-muted text-sm mb-sm"><?= __('shift_swap_swap_conflict_hint') ?></p>
         <form method="POST" action="<?= $BASE_URL ?>/admin/swap-requests/create">
             <?= csrf_field() ?>
             <input type="hidden" name="requester_id" value="<?= $requester_id ?>">
             <input type="hidden" name="target_id" value="<?= $target_id ?>">
 
             <div class="form-group">
-                <label class="form-label" for="requester_shift"><?= __('step_2_requester_shift') ?></label>
+                <label class="form-label" for="requester_shift"><?= __('shift_swap_step_2_requester_shift') ?></label>
                 <?php if (empty($requester_shifts)): ?>
-                    <p class="text-muted text-sm"><?= __('no_future_shift_available') ?></p>
+                    <p class="text-muted text-sm"><?= __('shift_swap_no_future_shift_available') ?></p>
                 <?php else: ?>
                     <select id="requester_shift" name="requester_shift_id" class="form-control" required>
                         <option value="">— <?= __('select') ?> —</option>
@@ -89,9 +89,9 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
             </div>
 
             <div class="form-group">
-                <label class="form-label" for="target_shift"><?= __('step_3_target_shift') ?></label>
+                <label class="form-label" for="target_shift"><?= __('shift_swap_step_3_target_shift') ?></label>
                 <?php if (empty($target_shifts)): ?>
-                    <p class="text-muted text-sm"><?= __('no_future_shift_available') ?></p>
+                    <p class="text-muted text-sm"><?= __('shift_swap_no_future_shift_available') ?></p>
                 <?php else: ?>
                     <select id="target_shift" name="target_shift_id" class="form-control" required>
                         <option value="">— <?= __('select') ?> —</option>
@@ -104,15 +104,15 @@ echo Flash::fromQuery('error', ['swap_conflict' => __('swap_conflict_error')])->
 
             <div class="form-group">
                 <label class="form-label" for="swap_reason"><?= __('reason') ?></label>
-                <input id="swap_reason" type="text" name="reason" class="form-control" placeholder="<?= __('swap_reason_placeholder') ?>">
+                <input id="swap_reason" type="text" name="reason" class="form-control" placeholder="<?= __('shift_swap_swap_reason_placeholder') ?>">
             </div>
 
             <?php if (!empty($requester_shifts) && !empty($target_shifts)):
-                echo Button::make(__('create_swap'))->primary()->submit()->render();
+                echo Button::make(__('shift_swap_create_swap'))->primary()->submit()->render();
             endif; ?>
         </form>
         <?php else: ?>
-            <p class="text-muted text-sm"><?= __('select_employees_to_continue') ?></p>
+            <p class="text-muted text-sm"><?= __('shift_swap_select_employees_to_continue') ?></p>
         <?php endif; ?>
 
     </div>

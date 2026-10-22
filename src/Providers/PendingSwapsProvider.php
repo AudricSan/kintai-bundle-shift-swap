@@ -18,8 +18,8 @@ final class PendingSwapsProvider implements PendingRequestsProvider
     public function __construct(private readonly Container $container) {}
 
     public function key(): string { return 'swaps'; }
-    public function label(): string { return 'pending_swaps'; }
-    public function emptyLabel(): string { return 'no_pending_swap'; }
+    public function label(): string { return 'shift_swap_pending_swaps'; }
+    public function emptyLabel(): string { return 'shift_swap_no_pending_swap'; }
     public function permission(): string { return 'swaps.view'; }
     public function storeFeature(): ?string { return 'swaps'; }
     public function order(): int { return 20; }
@@ -35,8 +35,8 @@ final class PendingSwapsProvider implements PendingRequestsProvider
             }
             $requests[] = new PendingRequest((int) $r['id'], $storeId, (int) ($r['requester_id'] ?? 0), (string) ($r['created_at'] ?? ''), [
                 ['label' => '#', 'value' => (int) $r['id']],
-                ['label' => 'requester', 'value' => (int) ($r['requester_id'] ?? 0), 'style' => PendingRequest::USER],
-                ['label' => 'target', 'value' => (int) ($r['target_user_id'] ?? 0), 'style' => PendingRequest::USER],
+                ['label' => 'shift_swap_requester', 'value' => (int) ($r['requester_id'] ?? 0), 'style' => PendingRequest::USER],
+                ['label' => 'shift_swap_target', 'value' => (int) ($r['target_user_id'] ?? 0), 'style' => PendingRequest::USER],
                 ['label' => 'shifts', 'value' => '#' . (int) ($r['requester_shift_id'] ?? 0)],
             ]);
         }
