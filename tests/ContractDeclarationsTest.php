@@ -35,7 +35,7 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertInstanceOf(NavItem::class, $items[0]);
         $this->assertSame('swaps', $items[0]->key);
         $this->assertSame(NavItem::REQUESTS, $items[0]->section);
-        $this->assertSame('swaps', $items[0]->label);
+        $this->assertSame('shift_swap_swaps', $items[0]->label);
         $this->assertSame('admin.swap_requests', $items[0]->managerRoute);
         $this->assertSame('employee.swaps', $items[0]->employeeRoute);
         $this->assertSame('arrows', $items[0]->icon);
@@ -56,7 +56,7 @@ final class ContractDeclarationsTest extends TestCase
 
         $this->assertCount(1, $features);
         $this->assertInstanceOf(StoreFeature::class, $features[0]);
-        $this->assertSame(['swaps', 'feature_swaps', 'feature_swaps_desc', '🔄', 40],
+        $this->assertSame(['swaps', 'shift_swap_feature_swaps', 'shift_swap_feature_swaps_desc', '🔄', 40],
             [$features[0]->key, $features[0]->label, $features[0]->description, $features[0]->icon, $features[0]->order]);
     }
 
@@ -68,7 +68,7 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertInstanceOf(Action::class, $actions[0]);
         $this->assertSame('request_swap', $actions[0]->key);
         $this->assertSame(Action::SHIFTS_EMPLOYEE, $actions[0]->slot);
-        $this->assertSame('request_swap', $actions[0]->label);
+        $this->assertSame('shift_swap_request_swap', $actions[0]->label);
         $this->assertSame('⇄', $actions[0]->icon);
         $this->assertSame(Action::PRIMARY, $actions[0]->style);
         $this->assertSame(10, $actions[0]->order);
@@ -79,7 +79,7 @@ final class ContractDeclarationsTest extends TestCase
         $pending = $this->bundle()->pendingRequestsProviders();
         $this->assertCount(1, $pending);
         $this->assertInstanceOf(PendingSwapsProvider::class, $pending[0]);
-        $this->assertSame(['swaps', 'pending_swaps', 'no_pending_swap', 'swaps.view', 'swaps', 20],
+        $this->assertSame(['swaps', 'shift_swap_pending_swaps', 'shift_swap_no_pending_swap', 'swaps.view', 'swaps', 20],
             [$pending[0]->key(), $pending[0]->label(), $pending[0]->emptyLabel(), $pending[0]->permission(), $pending[0]->storeFeature(), $pending[0]->order()]);
 
         $swaps = $this->bundle()->swapProviders();
@@ -95,9 +95,9 @@ final class ContractDeclarationsTest extends TestCase
         $this->assertCount(2, $widgets);
         [$manager, $employee] = $widgets;
         $this->assertInstanceOf(DashboardWidget::class, $manager);
-        $this->assertSame(['pending_swaps', DashboardWidget::MANAGER, 'widget_pending_swaps', 'shift-swap::widgets.dashboard-manager', 'swaps.view', 'swaps'],
+        $this->assertSame(['pending_swaps', DashboardWidget::MANAGER, 'shift_swap_widget_pending_swaps', 'shift-swap::widgets.dashboard-manager', 'swaps.view', 'swaps'],
             [$manager->key, $manager->audience, $manager->label, $manager->view, $manager->permission, $manager->storeFeature]);
-        $this->assertSame(['pending_swaps', DashboardWidget::EMPLOYEE, 'pending_swaps', 'shift-swap::widgets.dashboard-employee', null, 'swaps'],
+        $this->assertSame(['pending_swaps', DashboardWidget::EMPLOYEE, 'shift_swap_pending_swaps', 'shift-swap::widgets.dashboard-employee', null, 'swaps'],
             [$employee->key, $employee->audience, $employee->label, $employee->view, $employee->permission, $employee->storeFeature]);
         $this->assertFileExists(dirname(__DIR__) . '/Views/widgets/dashboard-manager.php');
         $this->assertFileExists(dirname(__DIR__) . '/Views/widgets/dashboard-employee.php');
@@ -109,7 +109,7 @@ final class ContractDeclarationsTest extends TestCase
 
         $this->assertCount(1, $stats);
         $this->assertInstanceOf(DashboardStat::class, $stats[0]);
-        $this->assertSame(['pending_swaps', 'swaps', '🔄', 'danger', 'swaps', 20],
+        $this->assertSame(['pending_swaps', 'shift_swap_swaps', '🔄', 'danger', 'swaps', 20],
             [$stats[0]->key, $stats[0]->label, $stats[0]->icon, $stats[0]->tone, $stats[0]->storeFeature, $stats[0]->order]);
     }
 
@@ -158,8 +158,8 @@ final class ContractDeclarationsTest extends TestCase
     /** Libellés des déclarations, des notifications, du journal d'activité et des widgets, fournis par le bundle. */
     public function testDeclaredLabelsAreTranslatedByTheBundle(): void
     {
-        $keys = ['swaps', 'perm_category_swaps', 'feature_swaps', 'feature_swaps_desc', 'request_swap', 'pending_swaps',
-            'no_pending_swap', 'widget_pending_swaps', 'notif_swap_requested', 'notif_swap_peer_accepted', 'notif_swap_peer_refused',
+        $keys = ['shift_swap_swaps', 'perm_category_swaps', 'shift_swap_feature_swaps', 'shift_swap_feature_swaps_desc', 'shift_swap_request_swap', 'shift_swap_pending_swaps',
+            'shift_swap_no_pending_swap', 'shift_swap_widget_pending_swaps', 'notif_swap_requested', 'notif_swap_peer_accepted', 'notif_swap_peer_refused',
             'notif_swap_accepted', 'notif_swap_refused', 'notif_swap_cancelled', 'audit_swap_created', 'audit_swap_peer_accepted',
             'audit_swap_peer_refused', 'audit_swap_cancelled', 'audit_swap_approved', 'audit_swap_refused'];
         foreach (['fr', 'en', 'ja'] as $locale) {

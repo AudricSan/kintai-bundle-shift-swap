@@ -140,11 +140,11 @@ final class EmployeeSwapController
 
         $targetShift = $this->shifts->findById($targetShiftId);
         if ($targetShift === null || (int) $targetShift['user_id'] !== $targetId) {
-            throw new ForbiddenException(__('error_target_shift_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_target_shift_not_found'));
         }
 
         if ((int) $myShift['store_id'] !== (int) $targetShift['store_id']) {
-            throw new ForbiddenException(__('error_shifts_different_stores'));
+            throw new ForbiddenException(__('shift_swap_error_shifts_different_stores'));
         }
 
         $savedSwap = $this->swapRequests->save([
@@ -181,7 +181,7 @@ final class EmployeeSwapController
 
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null || (int) $swap['target_user_id'] !== $userId) {
-            throw new ForbiddenException(__('error_request_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_request_not_found'));
         }
         if (($swap['status'] ?? '') !== 'pending' || ($swap['accepted_at'] ?? null) !== null) {
             return Response::redirect($this->base() . '/employee/swaps?error=invalid_state');
@@ -217,7 +217,7 @@ final class EmployeeSwapController
 
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null || (int) $swap['target_user_id'] !== $userId) {
-            throw new ForbiddenException(__('error_request_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_request_not_found'));
         }
         if (($swap['status'] ?? '') !== 'pending' || ($swap['accepted_at'] ?? null) !== null) {
             return Response::redirect($this->base() . '/employee/swaps?error=invalid_state');
@@ -250,7 +250,7 @@ final class EmployeeSwapController
 
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null || (int) $swap['requester_id'] !== $userId) {
-            throw new ForbiddenException(__('error_request_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_request_not_found'));
         }
         if (($swap['status'] ?? '') !== 'pending') {
             return Response::redirect($this->base() . '/employee/swaps?error=invalid_state');

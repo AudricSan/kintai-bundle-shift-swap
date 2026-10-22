@@ -19,7 +19,7 @@ $status_filter ??= '';
 
 $statusLabels = [
     'pending'   => __('pending'),
-    'accepted'  => __('accepted'),
+    'accepted'  => __('shift_swap_accepted'),
     'refused'   => __('rejected'),
     'cancelled' => __('cancelled'),
 ];
@@ -41,18 +41,18 @@ if (!function_exists('kintai_swap_shift_cell')) {
 echo Flash::fromQuery('success', [
     'approved' => __('approved'),
     'refused'  => __('rejected'),
-    'created'  => __('swap_created_admin'),
-    'deleted'  => __('swap_deleted'),
+    'created'  => __('shift_swap_swap_created_admin'),
+    'deleted'  => __('shift_swap_swap_deleted'),
 ])->render();
 echo Flash::fromQuery('error', [
-    'invalid_state' => __('action_impossible'),
-    'swap_conflict' => __('swap_conflict_error'),
+    'invalid_state' => __('shift_swap_action_impossible'),
+    'swap_conflict' => __('shift_swap_swap_conflict_error'),
 ])->render();
 ?>
 <div class="page-header">
-    <h2 class="page-header__title"><?= __('swap_requests') ?> <span class="page-count">(<?= count($swaps) ?>)</span></h2>
+    <h2 class="page-header__title"><?= __('shift_swap_swap_requests') ?> <span class="page-count">(<?= count($swaps) ?>)</span></h2>
     <div class="page-header__actions">
-        <?= Button::make('+ ' . __('new_swap'))->primary()->link($BASE_URL . '/admin/swap-requests/create')->render() ?>
+        <?= Button::make('+ ' . __('shift_swap_new_swap'))->primary()->link($BASE_URL . '/admin/swap-requests/create')->render() ?>
     </div>
 </div>
 
@@ -64,21 +64,21 @@ echo Flash::fromQuery('error', [
 <div class="card">
 <?= Table::make()
     ->data($swaps)
-    ->emptyMessage(__('no_swap_found'))
+    ->emptyMessage(__('shift_swap_no_swap_found'))
     ->currentSort($sort)
     ->filters(['status' => $status_filter])
     ->column('#', fn($s) => (string) (int) $s['id'])
     ->sortable(__('store'), 'store', fn($s) => htmlspecialchars($stores_map[(int)($s['store_id'] ?? 0)] ?? ('ID ' . (int)($s['store_id'] ?? 0))))
-    ->sortable(__('requester'), 'requester', fn($s) =>
+    ->sortable(__('shift_swap_requester'), 'requester', fn($s) =>
         '<a href="' . htmlspecialchars($BASE_URL . '/admin/users/' . (int)($s['requester_id'] ?? 0) . '/edit') . '">'
         . htmlspecialchars($users_map[(int)($s['requester_id'] ?? 0)] ?? ('ID ' . (int)($s['requester_id'] ?? 0))) . '</a>'
     )
-    ->column(__('target'), fn($s) =>
+    ->column(__('shift_swap_target'), fn($s) =>
         '<a href="' . htmlspecialchars($BASE_URL . '/admin/users/' . (int)($s['target_user_id'] ?? 0) . '/edit') . '">'
         . htmlspecialchars($users_map[(int)($s['target_user_id'] ?? 0)] ?? ('ID ' . (int)($s['target_user_id'] ?? 0))) . '</a>'
     )
-    ->column(__('requester_shift'), fn($s) => kintai_swap_shift_cell($shifts_map, (int) ($s['requester_shift_id'] ?? 0)))
-    ->column(__('target_shift'), fn($s) => !empty($s['target_shift_id']) ? kintai_swap_shift_cell($shifts_map, (int) $s['target_shift_id']) : '<span class="text-sm-muted">—</span>')
+    ->column(__('shift_swap_requester_shift'), fn($s) => kintai_swap_shift_cell($shifts_map, (int) ($s['requester_shift_id'] ?? 0)))
+    ->column(__('shift_swap_target_shift'), fn($s) => !empty($s['target_shift_id']) ? kintai_swap_shift_cell($shifts_map, (int) $s['target_shift_id']) : '<span class="text-sm-muted">—</span>')
     ->sortable(__('status'), 'status', function($s) use ($statusLabels) {
         $st = $s['status'] ?? 'pending';
         return Badge::make($statusLabels[$st] ?? $st)->status($st)->render();
@@ -94,13 +94,13 @@ echo Flash::fromQuery('error', [
             $html .= '<form method="POST" action="' . htmlspecialchars($BASE_URL . '/admin/swap-requests/' . $id . '/approve') . '" class="form-inline">' . csrf_field()
                 . Button::make(__('approve'))->success()->sm()->submit()->render() . '</form>';
             $html .= '<form method="POST" action="' . htmlspecialchars($BASE_URL . '/admin/swap-requests/' . $id . '/refuse') . '" class="form-inline">' . csrf_field()
-                . Button::make(__('reject'))->danger()->sm()->submit()->render() . '</form>';
+                . Button::make(__('shift_swap_reject'))->danger()->sm()->submit()->render() . '</form>';
             $html .= '</div>';
             return $html;
         }
 
         if ($status === 'accepted') {
-            return '<form method="POST" action="' . htmlspecialchars($BASE_URL . '/admin/swap-requests/' . $id . '/delete') . '" class="form-inline" data-confirm="' . htmlspecialchars(__('confirm_delete_swap'), ENT_QUOTES) . '">' . csrf_field()
+            return '<form method="POST" action="' . htmlspecialchars($BASE_URL . '/admin/swap-requests/' . $id . '/delete') . '" class="form-inline" data-confirm="' . htmlspecialchars(__('shift_swap_confirm_delete_swap'), ENT_QUOTES) . '">' . csrf_field()
                 . Button::make(__('delete'))->danger()->sm()->submit()->render() . '</form>';
         }
 
