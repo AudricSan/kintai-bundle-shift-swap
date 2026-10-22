@@ -8,6 +8,10 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Added
+
+- Contrat de bundle 1.24 : `ContractUsageTest` vérifie aussi que le bundle n'appelle que des fonctions globales déclarées par le contrat (`ContractUsageScanner::functionViolations()`).
+
 ### Changed
 
 - Notifications (contrat 1.23, `kintai_contract` `^1.23`) : les types sont déclarés au format enrichi (catégories « requests » et « planning », `reference_type` `swap`, e-mail par défaut pour l'échange validé et les changements de planning). L'échange créé par un gestionnaire et la restitution des shifts après suppression d'un échange utilisent leurs propres types, `swap_applied` et `swap_cancelled_restored`, au lieu de réutiliser le type `shift_assigned` du Core. Les liens ouvrent la liste des échanges avec la demande concernée en évidence (`?highlight=`) ; ouvrir la liste marque comme lues les notifications des échanges affichés.
