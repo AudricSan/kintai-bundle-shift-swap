@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftSwap\Controllers\Web;
 
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Repositories\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
-use kintai\Core\Repositories\ShiftTypeRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\StoreUserRepositoryInterface;
-use kintai\Core\Repositories\UserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
-use kintai\Core\Services\NotificationService;
-use kintai\UI\Controller\Web\HasBaseUrl;
-use kintai\UI\Controller\Web\HasStoreFeatureCheck;
-use kintai\UI\ViewRenderer;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Data\ShiftRepositoryInterface;
+use kintai\Bundles\Installed\ShiftSwap\Repositories\ShiftSwapRequestRepositoryInterface;
+use kintai\Contract\Data\ShiftTypeRepositoryInterface;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
+use kintai\Contract\Services\NotificationService;
+use kintai\Contract\Http\Concerns\HasBaseUrl;
+use kintai\Contract\Http\Concerns\HasStoreFeatureCheck;
+use kintai\Contract\View\ViewRenderer;
 
 final class EmployeeSwapController
 {
@@ -50,8 +50,15 @@ final class EmployeeSwapController
         usort($sent,     fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
         usort($received, fn($a, $b) => strcmp($b['created_at'] ?? '', $a['created_at'] ?? ''));
 
+        // L'employé voit ses échanges : les notifications correspondantes sont lues.
+        $swapIds = array_values(array_unique(array_map(fn(array $s) => (int) $s['id'], array_merge($sent, $received))));
+        if ($userId > 0 && $swapIds !== []) {
+            $this->notifs->markReadFor($userId, 'swap', $swapIds);
+        }
+
         return Response::html($this->view->render('shift-swap::swaps', [
             'title'      => 'Échanges de shifts',
+            'highlight_id' => (int) $request->query('highlight', 0),
             'sent'       => $sent,
             'received'   => $received,
             'users_map'  => $this->buildUsersMap(),
@@ -133,11 +140,11 @@ final class EmployeeSwapController
 
         $targetShift = $this->shifts->findById($targetShiftId);
         if ($targetShift === null || (int) $targetShift['user_id'] !== $targetId) {
-            throw new ForbiddenException(__('error_target_shift_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_target_shift_not_found'));
         }
 
         if ((int) $myShift['store_id'] !== (int) $targetShift['store_id']) {
-            throw new ForbiddenException(__('error_shifts_different_stores'));
+            throw new ForbiddenException(__('shift_swap_error_shifts_different_stores'));
         }
 
         $savedSwap = $this->swapRequests->save([
@@ -161,7 +168,7 @@ final class EmployeeSwapController
             'notif_swap_requested_body',
             $this->swapReplace($myShift, $targetShift, $userId),
             (int) ($savedSwap['id'] ?? 0),
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) ($savedSwap['id'] ?? 0)
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=created');
@@ -174,7 +181,7 @@ final class EmployeeSwapController
 
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null || (int) $swap['target_user_id'] !== $userId) {
-            throw new ForbiddenException(__('error_request_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_request_not_found'));
         }
         if (($swap['status'] ?? '') !== 'pending' || ($swap['accepted_at'] ?? null) !== null) {
             return Response::redirect($this->base() . '/employee/swaps?error=invalid_state');
@@ -197,7 +204,7 @@ final class EmployeeSwapController
             'notif_swap_peer_accepted_body',
             $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=accepted');
@@ -210,7 +217,7 @@ final class EmployeeSwapController
 
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null || (int) $swap['target_user_id'] !== $userId) {
-            throw new ForbiddenException(__('error_request_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_request_not_found'));
         }
         if (($swap['status'] ?? '') !== 'pending' || ($swap['accepted_at'] ?? null) !== null) {
             return Response::redirect($this->base() . '/employee/swaps?error=invalid_state');
@@ -230,7 +237,7 @@ final class EmployeeSwapController
             'notif_swap_peer_refused_body',
             $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=refused');
@@ -243,7 +250,7 @@ final class EmployeeSwapController
 
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null || (int) $swap['requester_id'] !== $userId) {
-            throw new ForbiddenException(__('error_request_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_request_not_found'));
         }
         if (($swap['status'] ?? '') !== 'pending') {
             return Response::redirect($this->base() . '/employee/swaps?error=invalid_state');
@@ -261,7 +268,7 @@ final class EmployeeSwapController
             'notif_swap_cancelled_body',
             $this->swapReplace($myShift ?? [], $targetShift ?? [], $userId),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
 
         return Response::redirect($this->base() . '/employee/swaps?success=cancelled');

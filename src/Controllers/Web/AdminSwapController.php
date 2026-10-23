@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace kintai\Bundles\Installed\ShiftSwap\Controllers\Web;
 
-use kintai\Core\Exceptions\ForbiddenException;
-use kintai\Core\Exceptions\NotFoundException;
-use kintai\Core\Repositories\ShiftRepositoryInterface;
-use kintai\Core\Repositories\ShiftSwapRequestRepositoryInterface;
-use kintai\Core\Repositories\StoreRepositoryInterface;
-use kintai\Core\Repositories\UserRepositoryInterface;
-use kintai\Core\Request;
-use kintai\Core\Response;
-use kintai\Core\Services\AuditLogger;
-use kintai\Core\Services\NotificationService;
-use kintai\UI\Controller\Web\HasAdminAccess;
-use kintai\UI\ViewRenderer;
+use kintai\Contract\Exceptions\ForbiddenException;
+use kintai\Contract\Exceptions\NotFoundException;
+use kintai\Contract\Data\ShiftRepositoryInterface;
+use kintai\Bundles\Installed\ShiftSwap\Repositories\ShiftSwapRequestRepositoryInterface;
+use kintai\Contract\Data\StoreRepositoryInterface;
+use kintai\Contract\Data\StoreUserRepositoryInterface;
+use kintai\Contract\Data\UserRepositoryInterface;
+use kintai\Contract\Http\Request;
+use kintai\Contract\Http\Response;
+use kintai\Contract\Services\AuditLogger;
+use kintai\Contract\Services\NotificationService;
+use kintai\Contract\Http\Concerns\HasAdminAccess;
+use kintai\Contract\View\ViewRenderer;
 
 final class AdminSwapController
 {
@@ -28,6 +29,9 @@ final class AdminSwapController
         private readonly NotificationService $notifs,
         private readonly StoreRepositoryInterface $stores,
         private readonly UserRepositoryInterface $users,
+        // Requis par le trait HasAdminAccess (memberUserIds) : sans lui, un gérant limité à ses magasins
+        // provoquait une erreur 500 sur /admin/swap-requests/create.
+        private readonly StoreUserRepositoryInterface $storeUsers,
     ) {}
 
     /**
@@ -79,7 +83,7 @@ final class AdminSwapController
         }
 
         return Response::html($this->view->render('shift-swap::swap-form', [
-            'title'            => __('create_swap'),
+            'title'            => __('shift_swap_create_swap'),
             'employees'        => $employees,
             'requester_id'     => $requesterId,
             'target_id'        => $targetId,
@@ -101,7 +105,7 @@ final class AdminSwapController
         $reason          = $request->post('reason', '') ?: null;
 
         if ($requesterId <= 0 || $targetId <= 0 || $requesterId === $targetId) {
-            throw new ForbiddenException(__('error_invalid_employee_selection'));
+            throw new ForbiddenException(__('shift_swap_error_invalid_employee_selection'));
         }
 
         $reqShift = $this->shifts->findById($requesterShiftId);
@@ -111,11 +115,11 @@ final class AdminSwapController
 
         $tgtShift = $this->shifts->findById($targetShiftId);
         if ($tgtShift === null || (int) $tgtShift['user_id'] !== $targetId) {
-            throw new ForbiddenException(__('error_target_shift_not_found'));
+            throw new ForbiddenException(__('shift_swap_error_target_shift_not_found'));
         }
 
         if ((int) $reqShift['store_id'] !== (int) $tgtShift['store_id']) {
-            throw new ForbiddenException(__('error_shifts_different_stores'));
+            throw new ForbiddenException(__('shift_swap_error_shifts_different_stores'));
         }
 
         $storeId = (int) $reqShift['store_id'];
@@ -150,11 +154,11 @@ final class AdminSwapController
 
         $this->notifs->notifyMany(
             [$requesterId, $targetId],
-            'shift_assigned',
+            'swap_applied',
             'notif_swap_applied_body',
             $this->swapDatesReplace($reqShift, $tgtShift),
             (int) ($savedSwap['id'] ?? 0),
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) ($savedSwap['id'] ?? 0)
         );
 
         return Response::redirect($this->base() . '/admin/swap-requests?success=created');
@@ -236,20 +240,37 @@ final class AdminSwapController
     {
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null) {
-            throw new NotFoundException(__('error_request_not_found'));
+            throw new NotFoundException(__('shift_swap_error_request_not_found'));
         }
         $this->assertStoreAccess($request, (int) ($swap['store_id'] ?? 0));
 
-        $reqShiftId = (int) ($swap['requester_shift_id'] ?? 0);
-        $tgtShiftId = (int) ($swap['target_shift_id'] ?? 0);
-        if ($reqShiftId > 0 && $tgtShiftId > 0) {
-            $reqShift = $this->shifts->findById($reqShiftId);
-            $tgtShift = $this->shifts->findById($tgtShiftId);
-            if ($reqShift !== null && $tgtShift !== null) {
-                $this->shifts->save(array_merge($reqShift, ['user_id' => (int) $tgtShift['user_id']]));
-                $this->shifts->save(array_merge($tgtShift, ['user_id' => (int) $reqShift['user_id']]));
-            }
+        // Seule une demande en attente s'approuve : sinon un rejeu (double clic, formulaire rechargé)
+        // ré-échangeait les shifts et annulait l'échange déjà appliqué.
+        if (($swap['status'] ?? '') !== 'pending') {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=invalid_state');
         }
+
+        $requesterId = (int) ($swap['requester_id'] ?? 0);
+        $targetId    = (int) ($swap['target_user_id'] ?? 0);
+        $reqShiftId  = (int) ($swap['requester_shift_id'] ?? 0);
+        $tgtShiftId  = (int) ($swap['target_shift_id'] ?? 0);
+        $reqShift    = $reqShiftId > 0 ? $this->shifts->findById($reqShiftId) : null;
+        $tgtShift    = $tgtShiftId > 0 ? $this->shifts->findById($tgtShiftId) : null;
+
+        // Les deux shifts doivent encore appartenir au demandeur et à la cible : s'ils ont été
+        // réaffectés depuis la demande, l'échange brouillerait les affectations.
+        if ($reqShift === null || $tgtShift === null
+            || (int) $reqShift['user_id'] !== $requesterId
+            || (int) $tgtShift['user_id'] !== $targetId) {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=invalid_state');
+        }
+        if ($this->hasOtherShiftOnDate($requesterId, $tgtShift['shift_date'] ?? '', $reqShiftId)
+            || $this->hasOtherShiftOnDate($targetId, $reqShift['shift_date'] ?? '', $tgtShiftId)) {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=swap_conflict');
+        }
+
+        $this->shifts->save(array_merge($reqShift, ['user_id' => $targetId]));
+        $this->shifts->save(array_merge($tgtShift, ['user_id' => $requesterId]));
 
         $this->swapRequests->save(array_merge($swap, ['status' => 'accepted']));
         $this->auditLogger->logUpdate($request, 'swap.approved', 'shift_swap_request', (int) $swap['id'], $swap, array_merge($swap, ['status' => 'accepted']), [], (int) ($swap['store_id'] ?? 0) ?: null);
@@ -262,7 +283,7 @@ final class AdminSwapController
                 $this->shifts->findById($tgtShiftId) ?? []
             ),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
         return Response::redirect($this->base() . '/admin/swap-requests?success=approved');
     }
@@ -271,9 +292,13 @@ final class AdminSwapController
     {
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null) {
-            throw new NotFoundException(__('error_request_not_found'));
+            throw new NotFoundException(__('shift_swap_error_request_not_found'));
         }
         $this->assertStoreAccess($request, (int) ($swap['store_id'] ?? 0));
+        // Refuser un échange déjà appliqué le marquait « refusé » sans restituer les shifts.
+        if (($swap['status'] ?? '') !== 'pending') {
+            return Response::redirect($this->base() . '/admin/swap-requests?error=invalid_state');
+        }
         $this->swapRequests->save(array_merge($swap, ['status' => 'refused']));
         $this->auditLogger->logUpdate($request, 'swap.refused', 'shift_swap_request', (int) $swap['id'], $swap, array_merge($swap, ['status' => 'refused']), [], (int) ($swap['store_id'] ?? 0) ?: null);
         $this->notifs->notify(
@@ -285,7 +310,7 @@ final class AdminSwapController
                 $this->shifts->findById((int) ($swap['target_shift_id'] ?? 0)) ?? []
             ),
             (int) $swap['id'],
-            '/employee/swaps'
+            '/employee/swaps?highlight=' . (int) $swap['id']
         );
         return Response::redirect($this->base() . '/admin/swap-requests?success=refused');
     }
@@ -299,7 +324,7 @@ final class AdminSwapController
     {
         $swap = $this->swapRequests->findById((int) $request->param('id'));
         if ($swap === null) {
-            throw new NotFoundException(__('error_request_not_found'));
+            throw new NotFoundException(__('shift_swap_error_request_not_found'));
         }
         $this->assertStoreAccess($request, (int) ($swap['store_id'] ?? 0));
 
@@ -312,14 +337,19 @@ final class AdminSwapController
             if ($reqShiftId > 0 && $tgtShiftId > 0) {
                 $reqShift = $this->shifts->findById($reqShiftId);
                 $tgtShift = $this->shifts->findById($tgtShiftId);
-                if ($reqShift !== null && $tgtShift !== null) {
+                // Restitution seulement si les shifts sont toujours dans l'état issu de l'échange :
+                // sinon ils ont été réaffectés depuis et les « rendre » écraserait ce changement.
+                $stillSwapped = $reqShift !== null && $tgtShift !== null
+                    && (int) $reqShift['user_id'] === $targetId
+                    && (int) $tgtShift['user_id'] === $requesterId;
+                if ($stillSwapped) {
                     $this->shifts->save(array_merge($reqShift, ['user_id' => $requesterId]));
                     $this->shifts->save(array_merge($tgtShift, ['user_id' => $targetId]));
                 }
             }
             $this->notifs->notifyMany(
                 array_filter([$requesterId, $targetId]),
-                'shift_assigned',
+                'swap_cancelled_restored',
                 'notif_swap_cancelled_restored_body',
                 $this->swapDatesReplace(
                     $this->shifts->findById((int) ($swap['requester_shift_id'] ?? 0)) ?? [],
