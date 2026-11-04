@@ -111,6 +111,22 @@ final class AdminSwapControllerTest extends TestCase
         $this->assertSame(200, $response->status());
     }
 
+    /** Un compte supprimé (anonymisé, ligne conservée) ne doit plus être proposé dans le formulaire d'échange. */
+    public function testCreateSwapHidesDeletedAccounts(): void
+    {
+        $this->writeViewContent(sys_get_temp_dir() . '/kintai-shift-swap-views', 'swap-form', "<?php echo json_encode(array_map(fn(\$e) => \$e['id'], \$employees));");
+        $this->writeViewContent(sys_get_temp_dir(), 'layout.app', "<?php echo \$content ?? '';");
+        $this->users->method('findAll')->willReturn([
+            ['id' => 1, 'last_name' => 'Dupont', 'first_name' => 'Jean', 'deleted_at' => null],
+            ['id' => 2, 'last_name' => '', 'first_name' => '[Supprimé]', 'deleted_at' => '2026-11-01 10:00:00'],
+        ]);
+
+        $req = new Request();
+        $req->setAttribute('managed_store_ids', null);
+
+        $this->assertSame('[1]', $this->controller()->createSwap($req)->body());
+    }
+
     public function testStoreSwapAppliesImmediateExchangeWithoutApprovalWorkflow(): void
     {
         $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
