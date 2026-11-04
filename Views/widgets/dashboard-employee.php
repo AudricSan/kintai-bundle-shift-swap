@@ -24,7 +24,7 @@ ob_start();
 </div>
 <?php
 echo Card::make()
-    ->header('<span>' . __('pending_swaps') . '</span> ' . Button::make(__('view_all'))->ghost()->sm()->link(route_url('employee.swaps'))->render())
+    ->header('<span>' . __('shift_swap_pending_swaps') . '</span> ' . Button::make(__('view_all'))->ghost()->sm()->link(route_url('employee.swaps'))->render())
     ->body(ob_get_clean())
     ->render();
 ?>

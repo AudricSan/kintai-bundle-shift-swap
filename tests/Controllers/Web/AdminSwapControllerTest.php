@@ -111,6 +111,22 @@ final class AdminSwapControllerTest extends TestCase
         $this->assertSame(200, $response->status());
     }
 
+    /** Un compte supprimé (anonymisé, ligne conservée) ne doit plus être proposé dans le formulaire d'échange. */
+    public function testCreateSwapHidesDeletedAccounts(): void
+    {
+        $this->writeViewContent(sys_get_temp_dir() . '/kintai-shift-swap-views', 'swap-form', "<?php echo json_encode(array_map(fn(\$e) => \$e['id'], \$employees));");
+        $this->writeViewContent(sys_get_temp_dir(), 'layout.app', "<?php echo \$content ?? '';");
+        $this->users->method('findAll')->willReturn([
+            ['id' => 1, 'last_name' => 'Dupont', 'first_name' => 'Jean', 'deleted_at' => null],
+            ['id' => 2, 'last_name' => '', 'first_name' => '[Supprimé]', 'deleted_at' => '2026-11-01 10:00:00'],
+        ]);
+
+        $req = new Request();
+        $req->setAttribute('managed_store_ids', null);
+
+        $this->assertSame('[1]', $this->controller()->createSwap($req)->body());
+    }
+
     public function testStoreSwapAppliesImmediateExchangeWithoutApprovalWorkflow(): void
     {
         $this->shifts = $this->createMock(ShiftRepositoryInterface::class);
@@ -146,7 +162,7 @@ final class AdminSwapControllerTest extends TestCase
         });
 
         $this->notifs->expects($this->once())->method('notifyMany')
-            ->with([1, 2], 'shift_assigned', $this->isString(), $this->anything(), 77);
+            ->with([1, 2], 'swap_applied', $this->isString(), $this->anything(), 77);
 
         $response = $this->controller()->storeSwap($req);
 
@@ -433,7 +449,7 @@ final class AdminSwapControllerTest extends TestCase
             return $d;
         });
 
-        $this->notifs->expects($this->once())->method('notifyMany')->with([1, 2], 'shift_assigned', $this->isString(), $this->anything(), 77);
+        $this->notifs->expects($this->once())->method('notifyMany')->with([1, 2], 'swap_cancelled_restored', $this->isString(), $this->anything(), 77);
         $this->swapRequests->expects($this->once())->method('delete')->with(77);
 
         $response = $this->controller()->deleteSwap($req);

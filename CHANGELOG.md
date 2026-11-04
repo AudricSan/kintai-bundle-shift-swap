@@ -8,7 +8,23 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Fixed
+- **Comptes supprimés** : la liste des employés du formulaire d'échange direct ne propose plus un compte supprimé (anonymisé, ligne conservée comme tombstone) ; l'historique reste affiché sous le compte anonymisé.
+
+## [2.0.0] - 2026-10-23
+
+Première version stable de la ligne 2 : elle regroupe, à l'identique, tout ce qui a été publié en alpha et en bêta depuis la ligne 1 (voir les sections ci-dessous), sans changement fonctionnel propre à cette version.
+
 ### Changed
+- **Traductions conformes au contrat** : 55 clés renommées avec le préfixe du bundle (`shift_swap_…`), sans changement de texte affiché ; `tests/TranslationContractTest.php` impose désormais parité fr/en/ja, préfixe, collisions et clés connues.
+
+### Added
+
+- Contrat de bundle 1.24 : `ContractUsageTest` vérifie aussi que le bundle n'appelle que des fonctions globales déclarées par le contrat (`ContractUsageScanner::functionViolations()`).
+
+### Changed
+
+- Notifications (contrat 1.23, `kintai_contract` `^1.23`) : les types sont déclarés au format enrichi (catégories « requests » et « planning », `reference_type` `swap`, e-mail par défaut pour l'échange validé et les changements de planning). L'échange créé par un gestionnaire et la restitution des shifts après suppression d'un échange utilisent leurs propres types, `swap_applied` et `swap_cancelled_restored`, au lieu de réutiliser le type `shift_assigned` du Core. Les liens ouvrent la liste des échanges avec la demande concernée en évidence (`?highlight=`) ; ouvrir la liste marque comme lues les notifications des échanges affichés.
 
 - Tests : plus aucun avis PHPUnit (24 auparavant) — les doublures sans attente sont des bouchons (`createStub()`), les mocks ne sont créés que dans les tests qui posent une attente, et les vérifications `->with()` sont conservées (`expects($this->atLeastOnce())`, ou `willReturnCallback()` par argument dans les méthodes utilitaires).
 - Extraction du Core (étape 4 du plan du contrat) : le bundle possède désormais tout son code et ses données. Le modèle `ShiftSwapRequest` et le dépôt `ShiftSwapRequestRepositoryInterface` / `DatabaseShiftSwapRequestRepository` (`src/Models`, `src/Repositories`) quittent le Core ; la table `shift_swap_requests` garde son nom et ses données. Une migration la crée si elle manque (installation neuve) ; une seconde reconstruit la table des instances installées avec l'ancien schéma SQL (`target_id` obligatoire, `reviewed_by`/`reviewed_at`, `peer_accepted_at`), sur lequel créer un échange échouait (erreur 500), en recopiant les demandes existantes (`target_id` → `target_user_id`, `peer_accepted_at` → `accepted_at`, `reviewed_*` → `approved_*`) ; une table déjà au bon schéma n'est pas touchée. Le bundle déclare désormais lui-même les échanges des statistiques du Core (`swapProviders()`, contrat 1.18), le widget « Échanges en attente » des tableaux de bord gérant et employé (`dashboardWidgets()`, même clé `pending_swaps` : les préférences sont conservées), la carte « Échanges » du tableau de bord employé (`dashboardStats()`, contrat 1.19, `"kintai_contract": "^1.19"`) et ses types de notification (`notificationTypes()`). Sur le tableau de bord gérant, le widget s'affiche désormais avec ceux des autres bundles (sa position change, son contenu non). Les libellés de la catégorie de permissions, de la fonctionnalité, des notifications, du journal d'activité et des widgets passent dans `lang/`. `ContractUsageTest` n'admet plus aucune classe du Core hors contrat ; `ContractDeclarationsTest` vérifie chaque déclaration valeur par valeur. Tests repris du Core (affectation de masse de l'API) ; nouveaux tests `ShiftSwapRequestsMigrationTest` (installation neuve, ancien schéma avec données, schéma déjà correct), `SwapRequestsProviderTest` et `PendingSwapsWidgetTest`.

@@ -59,7 +59,7 @@ final class ShiftSwapBundle extends Bundle
     public function navigation(): array
     {
         return [
-            new NavItem('swaps', NavItem::REQUESTS, 'swaps', 'admin.swap_requests', 'employee.swaps',
+            new NavItem('swaps', NavItem::REQUESTS, 'shift_swap_swaps', 'admin.swap_requests', 'employee.swaps',
                 icon: 'arrows', activePaths: ['/admin/swap-requests', '/employee/swaps'],
                 storeFeature: 'swaps', order: 20, mobile: true),
         ];
@@ -78,7 +78,7 @@ final class ShiftSwapBundle extends Bundle
      */
     public function storeFeatures(): array
     {
-        return [new StoreFeature('swaps', 'feature_swaps', 'feature_swaps_desc', '🔄', 40)];
+        return [new StoreFeature('swaps', 'shift_swap_feature_swaps', 'shift_swap_feature_swaps_desc', '🔄', 40)];
     }
 
     /**
@@ -87,7 +87,7 @@ final class ShiftSwapBundle extends Bundle
     public function actions(): array
     {
         return [
-            new Action('request_swap', Action::SHIFTS_EMPLOYEE, 'request_swap', static fn(): string => route_url('employee.swaps.create'), '⇄', Action::PRIMARY, order: 10),
+            new Action('request_swap', Action::SHIFTS_EMPLOYEE, 'shift_swap_request_swap', static fn(): string => route_url('employee.swaps.create'), '⇄', Action::PRIMARY, order: 10),
         ];
     }
 
@@ -116,10 +116,10 @@ final class ShiftSwapBundle extends Bundle
         $widget = static fn(): PendingSwapsWidget => Container::getInstance()->make(PendingSwapsWidget::class);
 
         return [
-            new DashboardWidget('pending_swaps', DashboardWidget::MANAGER, 'widget_pending_swaps', 'shift-swap::widgets.dashboard-manager',
+            new DashboardWidget('pending_swaps', DashboardWidget::MANAGER, 'shift_swap_widget_pending_swaps', 'shift-swap::widgets.dashboard-manager',
                 static fn(array $ctx): array => $widget()->forManager(array_map('intval', $ctx['store_ids'] ?? [])),
                 permission: 'swaps.view', storeFeature: 'swaps'),
-            new DashboardWidget('pending_swaps', DashboardWidget::EMPLOYEE, 'pending_swaps', 'shift-swap::widgets.dashboard-employee',
+            new DashboardWidget('pending_swaps', DashboardWidget::EMPLOYEE, 'shift_swap_pending_swaps', 'shift-swap::widgets.dashboard-employee',
                 static fn(array $ctx): array => ['pending_swaps' => $widget()->forEmployee((int) ($ctx['user']['id'] ?? 0))],
                 storeFeature: 'swaps'),
         ];
@@ -131,24 +131,33 @@ final class ShiftSwapBundle extends Bundle
     public function dashboardStats(): array
     {
         return [
-            new DashboardStat('pending_swaps', 'swaps',
+            new DashboardStat('pending_swaps', 'shift_swap_swaps',
                 static fn(array $ctx): int => count(Container::getInstance()->make(PendingSwapsWidget::class)->forEmployee((int) ($ctx['user']['id'] ?? 0))),
                 '🔄', 'danger', 'swaps', 20),
         ];
     }
 
     /**
-     * Types de notification (contrat 1.7).
+     * Types de notification, au format enrichi (contrat 1.23). L'identifiant passé à notify() est celui de la demande
+     * d'échange (reference_type « swap »). Seuls l'échange validé et les deux changements de planning (appliqué par un
+     * gestionnaire, rétabli après suppression) arrivent aussi par e-mail.
+     * `swap_applied` et `swap_cancelled_restored` remplacent le type `shift_assigned` du Core, que ce bundle
+     * réutilisait à tort.
      */
     public function notificationTypes(): array
     {
+        $push  = ['push' => true, 'email' => false];
+        $both  = ['push' => true, 'email' => true];
+
         return [
-            'swap_requested'     => '⇄',
-            'swap_peer_accepted' => '⇄',
-            'swap_peer_refused'  => '⇄',
-            'swap_accepted'      => '⇄',
-            'swap_refused'       => '⇄',
-            'swap_cancelled'     => '⇄',
+            'swap_requested'          => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_peer_accepted'      => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_peer_refused'       => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_accepted'           => ['icon' => '⇄', 'category' => 'requests', 'channels' => $both, 'reference_type' => 'swap'],
+            'swap_refused'            => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_cancelled'          => ['icon' => '⇄', 'category' => 'requests', 'channels' => $push, 'reference_type' => 'swap'],
+            'swap_applied'            => ['icon' => '⇄', 'category' => 'planning', 'channels' => $both, 'reference_type' => 'swap'],
+            'swap_cancelled_restored' => ['icon' => '⇄', 'category' => 'planning', 'channels' => $both, 'reference_type' => 'swap'],
         ];
     }
 }

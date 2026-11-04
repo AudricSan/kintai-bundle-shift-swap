@@ -123,6 +123,25 @@ final class EmployeeSwapControllerTest extends TestCase
         $this->assertArrayNotHasKey('peer_accepted_at', $captured);
     }
 
+    /** Ouvrir la liste marque comme lues les notifications des échanges affichés (envoyés et reçus, sans doublon). */
+    public function testSwapsMarksTheNotificationsOfTheDisplayedSwapsAsRead(): void
+    {
+        $this->stores = $this->createStub(StoreRepositoryInterface::class);
+        $this->storeUsers = $this->createStub(StoreUserRepositoryInterface::class);
+        $this->swapRequests = $this->createStub(ShiftSwapRequestRepositoryInterface::class);
+        $this->notifs = $this->createMock(NotificationService::class);
+        $this->storeUsers->method('findByUser')->willReturn([['store_id' => 5, 'user_id' => 1]]);
+        $this->stores->method('getFeatures')->willReturn([]);
+        $this->swapRequests->method('findByRequester')->willReturn([['id' => 3, 'created_at' => '2026-01-01'], ['id' => 4, 'created_at' => '2026-01-02']]);
+        $this->swapRequests->method('findByTarget')->willReturn([['id' => 4, 'created_at' => '2026-01-02'], ['id' => 9, 'created_at' => '2026-01-03']]);
+        $this->notifs->expects($this->once())->method('markReadFor')->with(1, 'swap', [4, 3, 9]);
+
+        $req = new Request();
+        $req->setAttribute('auth_user', ['id' => 1]);
+
+        $this->assertSame(200, $this->controller()->swaps($req)->status());
+    }
+
     public function testStoreSwapRedirectsWhenFeatureDisabledForStore(): void
     {
         $this->stores = $this->createMock(StoreRepositoryInterface::class);
