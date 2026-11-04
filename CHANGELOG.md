@@ -8,6 +8,9 @@ Le schéma de version (X.Y.Z, canaux alpha/beta/main) est décrit dans
 
 ## [Unreleased]
 
+### Fixed
+- **Comptes supprimés** : la liste des employés du formulaire d'échange direct ne propose plus un compte supprimé (anonymisé, ligne conservée comme tombstone) ; l'historique reste affiché sous le compte anonymisé.
+
 ## [2.0.0] - 2026-10-23
 
 Première version stable de la ligne 2 : elle regroupe, à l'identique, tout ce qui a été publié en alpha et en bêta depuis la ligne 1 (voir les sections ci-dessous), sans changement fonctionnel propre à cette version.

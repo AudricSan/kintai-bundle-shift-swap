@@ -43,8 +43,8 @@ final class AdminSwapController
         $managedIds = $this->managedIds($request);
         $userIds    = $managedIds !== null ? $this->memberUserIds($managedIds) : null;
         $employees  = $userIds !== null
-            ? array_values(array_filter($this->users->findAll(), fn($u) => in_array((int) $u['id'], $userIds, true)))
-            : $this->users->findAll();
+            ? array_values(array_filter($this->users->findAll(), fn($u) => empty($u['deleted_at']) && in_array((int) $u['id'], $userIds, true)))
+            : array_values(array_filter($this->users->findAll(), fn($u) => empty($u['deleted_at'])));
 
         usort($employees, fn($a, $b) => strcmp(
             strtolower(trim(($a['last_name'] ?? '') . ' ' . ($a['first_name'] ?? ''))),
